@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOLLY | Clarify Shampoo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <style>
+        :root {
+            --bg: #FFFFFF;
+            --bg-el: #F8F7FC;
+            --fg: #1A1A2E;
+            --fg-dim: #555566;
+            --muted: #9999AA;
+            --accent: #7C3AED;
+            --accent-lt: #A78BFA;
+            --accent-dk: #6D28D9;
+            --card: #F5F3FF;
+            --border: #E8E6F0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--fg); overflow-x: hidden; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Poppins', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--accent-lt); border-radius: 3px; }
+        ::selection { background: rgba(124,58,237,0.15); color: var(--accent-dk); }
+
+        /* Nav */
+        .nav-main {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+            background: rgba(255,255,255,0.92); backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border); transition: box-shadow .3s;
+        }
+        .nav-main.scrolled { box-shadow: 0 2px 24px rgba(124,58,237,0.06); }
+        .nav-link { color: var(--fg-dim); text-decoration: none; font-size: .9rem; font-weight: 500; transition: color .3s; position: relative; }
+        .nav-link:hover { color: var(--accent); }
+        .nav-link::after { content: ''; position: absolute; bottom: -4px; left: 0; width: 0; height: 2px; background: var(--accent); border-radius: 1px; transition: width .3s; }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Hamburger */
+        .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; z-index: 110; }
+        .hamburger span { display: block; width: 22px; height: 2px; background: var(--fg); transition: all .35s; border-radius: 1px; }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+        @media(max-width:768px) { .hamburger { display: flex; } .desk-nav { display: none !important; } }
+
+        /* Mobile menu */
+        .mob-menu {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.98); backdrop-filter: blur(20px); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2rem;
+            transform: translateX(100%); transition: transform .55s cubic-bezier(.16,1,.3,1);
+        }
+        .mob-menu.open { transform: translateX(0); }
+        .mob-menu a { color: var(--fg); text-decoration: none; font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 600; transition: color .3s; }
+        .mob-menu a:hover { color: var(--accent); }
+
+        /* Hero */
+        .hero-section {
+            min-height: 100vh; display: flex; align-items: center;
+            background: var(--bg); position: relative; overflow: hidden;
+        }
+        .hero-bg-circle {
+            position: absolute; width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(124,58,237,0.06), transparent 70%);
+            pointer-events: none; z-index: 0;
+        }
+        .hero-headline {
+            font-family: 'Poppins', sans-serif; font-weight: 900;
+            font-size: clamp(2.8rem, 7vw, 5.5rem); line-height: 1.0;
+            letter-spacing: -0.03em; color: var(--fg);
+        }
+        .hero-headline .accent-word { color: var(--accent); }
+
+        /* 3D container */
+        #bottle-box { width: 100%; height: 100%; min-height: 400px; cursor: grab; position: relative; }
+        #bottle-box:active { cursor: grabbing; }
+        #bottle-box canvas { display: block; }
+
+        .drag-hint {
+            display: flex; align-items: center; gap: .4rem; color: var(--muted);
+            font-size: .78rem; animation: hintPulse 2.2s ease-in-out infinite;
+        }
+        @keyframes hintPulse { 0%,100% { opacity: .4; } 50% { opacity: 1; } }
+        .drag-hint i { animation: hintRotate 3s ease-in-out infinite; }
+        @keyframes hintRotate { 0%,100% { transform: rotate(0); } 25% { transform: rotate(15deg); } 75% { transform: rotate(-15deg); } }
+
+        /* Buttons */
+        .btn-primary {
+            display: inline-flex; align-items: center; gap: .6rem;
+            padding: .9rem 2.2rem; background: var(--accent); color: #fff;
+            font-weight: 600; border-radius: 60px; border: none; cursor: pointer;
+            font-size: .95rem; font-family: 'DM Sans', sans-serif;
+            transition: all .4s cubic-bezier(.16,1,.3,1);
+            text-decoration: none; position: relative; overflow: hidden;
+        }
+        .btn-primary::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%); transition: transform .6s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(124,58,237,0.3); }
+        .btn-primary:hover::after { transform: translateX(100%); }
+
+        .btn-outline {
+            display: inline-flex; align-items: center; gap: .6rem;
+            padding: .9rem 2.2rem; background: transparent; color: var(--accent);
+            font-weight: 600; border-radius: 60px; border: 2px solid var(--accent);
+            cursor: pointer; font-size: .95rem; font-family: 'DM Sans', sans-serif;
+            transition: all .4s; text-decoration: none;
+        }
+        .btn-outline:hover { background: var(--card); transform: translateY(-2px); }
+
+        /* Section shared */
+        .section-badge {
+            display: inline-flex; align-items: center; gap: .5rem;
+            padding: .35rem 1rem; border-radius: 60px;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--accent); font-size: .75rem; font-weight: 600;
+            letter-spacing: .06em; text-transform: uppercase;
+        }
+        .section-title { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; }
+        .divider-purple { width: 48px; height: 3px; background: var(--accent); border-radius: 2px; }
+
+        /* Feature card */
+        .feat-card {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 20px;
+            padding: 2rem; transition: all .4s cubic-bezier(.16,1,.3,1); position: relative; overflow: hidden;
+        }
+        .feat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-lt)); opacity: 0; transition: opacity .4s;
+        }
+        .feat-card:hover { transform: translateY(-6px); border-color: var(--accent-lt); box-shadow: 0 20px 56px rgba(124,58,237,0.08); }
+        .feat-card:hover::before { opacity: 1; }
+        .feat-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            background: var(--card); display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.2rem; color: var(--accent); font-size: 1.25rem; transition: all .4s;
+        }
+        .feat-card:hover .feat-icon { background: rgba(124,58,237,0.12); transform: scale(1.08); }
+
+        /* Ingredient */
+        .ingr-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+            padding: 1.8rem; text-align: center; transition: all .4s cubic-bezier(.16,1,.3,1);
+        }
+        .ingr-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 16px 48px rgba(124,58,237,0.08); }
+        .ingr-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem; border: 3px solid var(--border); transition: border-color .4s; }
+        .ingr-card:hover .ingr-img { border-color: var(--accent-lt); }
+
+        /* Step */
+        .step { position: relative; padding-left: 52px; padding-bottom: 2.2rem; }
+        .step:last-child { padding-bottom: 0; }
+        .step-num {
+            position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%;
+            background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: .85rem; font-family: 'Poppins', sans-serif;
+        }
+        .step-line { position: absolute; left: 17px; top: 40px; width: 2px; height: calc(100% - 16px); background: linear-gradient(to bottom, var(--accent), transparent); }
+
+        /* Review */
+        .rev-card {
+            background: var(--bg); border: 1px solid var(--border); border-radius: 20px;
+            padding: 2rem; transition: all .4s;
+        }
+        .rev-card:hover { border-color: var(--accent-lt); box-shadow: 0 12px 40px rgba(124,58,237,0.06); }
+        .stars { color: #F59E0B; font-size: .82rem; letter-spacing: 2px; }
+
+        /* Scroll reveal */
+        .rv { opacity: 0; transform: translateY(32px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+        .rv.vis { opacity: 1; transform: translateY(0); }
+        .rv-d1 { transition-delay: .1s; } .rv-d2 { transition-delay: .2s; } .rv-d3 { transition-delay: .3s; } .rv-d4 { transition-delay: .4s; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(120px);
+            background: var(--fg); color: #fff; padding: 1rem 2rem; border-radius: 14px;
+            font-size: .9rem; z-index: 200; transition: transform .55s cubic-bezier(.16,1,.3,1);
+            box-shadow: 0 16px 48px rgba(0,0,0,.15); display: flex; align-items: center; gap: .7rem;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* Footer */
+        .ft-link { color: var(--muted); text-decoration: none; font-size: .88rem; transition: color .3s; }
+        .ft-link:hover { color: var(--accent); }
+
+        /* Stat counter */
+        .stat-num { font-variant-numeric: tabular-nums; }
+
+        /* Scroll indicator */
+        @keyframes scrollLine { 0% { opacity: 0; transform: scaleY(0); transform-origin: top; } 50% { opacity: 1; transform: scaleY(1); transform-origin: top; } 100% { opacity: 0; transform: scaleY(1); transform-origin: bottom; } }
+
+        /* Subtle bg pattern */
+        .dot-pattern {
+            background-image: radial-gradient(rgba(124,58,237,0.04) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        @media(max-width:640px) {
+            .hero-headline { font-size: 2.6rem !important; }
+            #bottle-box { min-height: 320px; }
+        }
+        @media(min-width:641px) and (max-width:1024px) {
+            .hero-headline { font-size: 3.5rem !important; }
+        }
+        @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms!important; transition-duration:.01ms!important; } }
+    </style>
+</head>
+<body>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-check" style="color:var(--accent-lt)"></i>
+        <span id="toast-msg">Added to cart</span>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div class="mob-menu" id="mobMenu">
+        <a href="#hero" onclick="closeMob()">Home</a>
+        <a href="#features" onclick="closeMob()">Benefits</a>
+        <a href="#ingredients" onclick="closeMob()">Ingredients</a>
+        <a href="#howto" onclick="closeMob()">How to Use</a>
+        <a href="#reviews" onclick="closeMob()">Reviews</a>
+        <a href="#cta" class="btn-primary" style="margin-top:1rem" onclick="closeMob()">Shop Now</a>
+    </div>
+
+    <!-- Nav -->
+    <nav class="nav-main" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="#hero" style="font-family:'Poppins',sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent);text-decoration:none;letter-spacing:-.02em">
+                bolly
+            </a>
+            <div class="desk-nav flex items-center gap-8">
+                <a href="#features" class="nav-link">Benefits</a>
+                <a href="#ingredients" class="nav-link">Ingredients</a>
+                <a href="#howto" class="nav-link">How to Use</a>
+                <a href="#reviews" class="nav-link">Reviews</a>
+                <a href="#cta" class="btn-primary" style="padding:.55rem 1.5rem;font-size:.82rem">Shop Now</a>
+            </div>
+            <button class="hamburger" id="hamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ==================== HERO ==================== -->
+    <section id="hero" class="hero-section">
+        <div class="hero-bg-circle" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+        <div class="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-3 gap-6 items-center relative z-10" style="padding-top:80px;padding-bottom:40px">
+            <!-- Left: Headline -->
+            <div class="order-2 lg:order-1 text-left lg:text-left text-center">
+                <h1 class="hero-headline rv">
+                    KNOCK OUT<br><span class="accent-word">FLAKES</span>
+                </h1>
+                <p class="rv rv-d2 mt-5" style="font-size:1.05rem;color:var(--fg-dim);line-height:1.7;max-width:380px">
+                    Anti-dandruff formula that clears flakes from the first wash.
+                </p>
+                <div class="flex flex-wrap gap-3 mt-6 rv rv-d3 justify-center lg:justify-start">
+                    <a href="#cta" class="btn-primary">Shop Now <i class="fa-solid fa-arrow-right" style="font-size:.8rem"></i></a>
+                    <a href="#features" class="btn-outline">Learn More</a>
+                </div>
+            </div>
+
+            <!-- Center: 3D Bottle -->
+            <div class="order-1 lg:order-2 relative flex items-center justify-center" style="min-height:440px">
+                <div id="bottle-box" class="w-full h-full" style="max-width:480px;aspect-ratio:1/1;margin:0 auto"></div>
+                <div class="drag-hint absolute bottom-2 left-1/2 -translate-x-1/2">
+                    <i class="fa-solid fa-hand-pointer"></i> Drag to rotate
+                </div>
+            </div>
+
+            <!-- Right: Description -->
+            <div class="order-3 text-center lg:text-left">
+                <div class="section-badge rv" style="margin-bottom:1.2rem">
+                    <i class="fa-solid fa-sparkles" style="font-size:.6rem"></i> New Formula
+                </div>
+                <p class="rv rv-d1" style="font-size:1.15rem;color:var(--fg-dim);line-height:1.8;max-width:360px;margin:0 auto">
+                    Journey in the wonderful world of shampoo. Experience the deep-cleansing power of bolly Clarify.
+                </p>
+                <div class="flex gap-6 mt-8 rv rv-d2 justify-center lg:justify-start">
+                    <div>
+                        <div class="stat-num text-2xl font-bold" style="color:var(--accent)" data-target="95" data-suffix="%">0%</div>
+                        <div style="font-size:.78rem;color:var(--muted);margin-top:.15rem">Flake Reduction</div>
+                    </div>
+                    <div>
+                        <div class="stat-num text-2xl font-bold" style="color:var(--accent)" data-target="4.9" data-suffix="/5" data-decimal="true">0/5</div>
+                        <div style="font-size:.78rem;color:var(--muted);margin-top:.15rem">User Rating</div>
+                    </div>
+                    <div>
+                        <div class="stat-num text-2xl font-bold" style="color:var(--accent)" data-target="30" data-suffix="K+">0K+</div>
+                        <div style="font-size:.78rem;color:var(--muted);margin-top:.15rem">Bottles Sold</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Scroll indicator -->
+        <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10" style="color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase">
+            <span>Scroll</span>
+            <div style="width:1px;height:28px;background:linear-gradient(to bottom,var(--muted),transparent);animation:scrollLine 1.8s ease-in-out infinite"></div>
+        </div>
+    </section>
+
+    <!-- ==================== FEATURES ==================== -->
+    <section id="features" class="dot-pattern py-24 lg:py-28">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-14">
+                <div class="section-badge rv" style="margin-bottom:.8rem"><i class="fa-solid fa-star" style="font-size:.55rem"></i> Benefits</div>
+                <h2 class="section-title rv rv-d1">Why bolly Clarify Works</h2>
+                <div class="divider-purple mx-auto mt-4 rv rv-d2"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="feat-card rv rv-d1">
+                    <div class="feat-icon"><i class="fa-solid fa-snowflake"></i></div>
+                    <h3 class="text-lg font-semibold mb-2">Flake Free</h3>
+                    <p style="color:var(--fg-dim);font-size:.9rem;line-height:1.65">Zinc pyrithione targets dandruff at the source for visible results from wash one.</p>
+                </div>
+                <div class="feat-card rv rv-d2">
+                    <div class="feat-icon"><i class="fa-solid fa-droplet"></i></div>
+                    <h3 class="text-lg font-semibold mb-2">Deep Cleanse</h3>
+                    <p style="color:var(--fg-dim);font-size:.9rem;line-height:1.65">Removes product buildup and excess oil, leaving scalp fresh and breathable.</p>
+                </div>
+                <div class="feat-card rv rv-d3">
+                    <div class="feat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3 class="text-lg font-semibold mb-2">Scalp Balance</h3>
+                    <p style="color:var(--fg-dim);font-size:.9rem;line-height:1.65">pH-optimized formula maintains your scalp's natural moisture barrier.</p>
+                </div>
+                <div class="feat-card rv rv-d4">
+                    <div class="feat-icon"><i class="fa-solid fa-feather"></i></div>
+                    <h3 class="text-lg font-semibold mb-2">Lightweight</h3>
+                    <p style="color:var(--fg-dim);font-size:.9rem;line-height:1.65">Never weighs hair down. Soft, bouncy, and full of movement after every wash.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== INGREDIENTS ==================== -->
+    <section id="ingredients" class="py-24 lg:py-28" style="background:var(--bg-el)">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
+                <div>
+                    <div class="section-badge rv" style="margin-bottom:.8rem"><i class="fa-solid fa-flask" style="font-size:.55rem"></i> Ingredients</div>
+                    <h2 class="section-title rv rv-d1 mb-4">Clinically Proven<br>Active Ingredients</h2>
+                    <div class="divider-purple rv rv-d2" style="margin-bottom:1.5rem"></div>
+                    <p class="rv rv-d2" style="color:var(--fg-dim);font-size:.95rem;line-height:1.75;margin-bottom:2rem">
+                        Every ingredient is dermatologically tested and selected for maximum efficacy against dandruff while keeping hair healthy and hydrated.
+                    </p>
+                    <a href="#cta" class="btn-outline rv rv-d3" style="font-size:.88rem;padding:.75rem 1.8rem">
+                        View Full Formula <i class="fa-solid fa-arrow-right" style="font-size:.7rem"></i>
+                    </a>
+                </div>
+                <div class="grid grid-cols-2 gap-5">
+                    <div class="ingr-card rv rv-d1">
+                        <img src="https://picsum.photos/seed/zinc-pyr/100/100.jpg" alt="Zinc Pyrithione" class="ingr-img">
+                        <h4 class="font-semibold mb-1" style="font-size:.95rem">Zinc Pyrithione</h4>
+                        <p style="color:var(--muted);font-size:.78rem;line-height:1.5">Gold-standard anti-dandruff active</p>
+                    </div>
+                    <div class="ingr-card rv rv-d2">
+                        <img src="https://picsum.photos/seed/salicylic2/100/100.jpg" alt="Salicylic Acid" class="ingr-img">
+                        <h4 class="font-semibold mb-1" style="font-size:.95rem">Salicylic Acid</h4>
+                        <p style="color:var(--muted);font-size:.78rem;line-height:1.5">Exfoliates and unclogs follicles</p>
+                    </div>
+                    <div class="ingr-card rv rv-d3">
+                        <img src="https://picsum.photos/seed/tea-tree2/100/100.jpg" alt="Tea Tree" class="ingr-img">
+                        <h4 class="font-semibold mb-1" style="font-size:.95rem">Tea Tree Oil</h4>
+                        <p style="color:var(--muted);font-size:.78rem;line-height:1.5">Natural antifungal protection</p>
+                    </div>
+                    <div class="ingr-card rv rv-d4">
+                        <img src="https://picsum.photos/seed/aloe-clear/100/100.jpg" alt="Aloe Vera" class="ingr-img">
+                        <h4 class="font-semibold mb-1" style="font-size:.95rem">Aloe Vera</h4>
+                        <p style="color:var(--muted);font-size:.78rem;line-height:1.5">Soothes and hydrates the scalp</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== HOW TO USE ==================== -->
+    <section id="howto" class="py-24 lg:py-28">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-14 items-start">
+                <div>
+                    <div class="section-badge rv" style="margin-bottom:.8rem"><i class="fa-solid fa-list-ol" style="font-size:.55rem"></i> How to Use</div>
+                    <h2 class="section-title rv rv-d1 mb-4">Three Simple Steps</h2>
+                    <div class="divider-purple rv rv-d2" style="margin-bottom:2rem"></div>
+                    <div class="rv rv-d2">
+                        <div class="step">
+                            <div class="step-num">1</div>
+                            <div class="step-line"></div>
+                            <h4 class="font-semibold text-lg mb-1">Wet Hair Thoroughly</h4>
+                            <p style="color:var(--fg-dim);font-size:.9rem;line-height:1.65">Use warm water to fully saturate hair and open the cuticles for deep cleansing.</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">2</div>
+                            <div class="step-line"></div>
+                            <h4 class="font-semibold text-lg mb-1">Massage Into Scalp</h4>
+                            <p style="color:var(--fg-dim);font-size:.9rem;line-height:1.65">Apply a coin-sized amount and massage gently in circular motions for 2 minutes.</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">3</div>
+                            <h4 class="font-semibold text-lg mb-1">Rinse & Repeat</h4>
+                            <p style="color:var(--fg-dim);font-size:.9rem;line-height:1.65">Rinse completely. For best results, follow with bolly Clarify Conditioner.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="rv rv-d2 flex items-center justify-center" style="min-height:380px">
+                    <div style="width:100%;max-width:380px;aspect-ratio:3/4;border-radius:24px;overflow:hidden;border:1px solid var(--border);position:relative">
+                        <img src="https://picsum.photos/seed/shower-scene/600/800.jpg" alt="How to use" style="width:100%;height:100%;object-fit:cover">
+                        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(26,26,46,0.7),transparent 50%)"></div>
+                        <div style="position:absolute;bottom:1.5rem;left:1.5rem;right:1.5rem">
+                            <div style="font-size:.72rem;color:var(--accent-lt);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem;font-weight:600">Pro Tip</div>
+                            <p style="font-size:.85rem;color:rgba(255,255,255,0.85);line-height:1.5">Leave lather on for 2-3 minutes before rinsing for maximum flake-fighting power.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== REVIEWS ==================== -->
+    <section id="reviews" class="dot-pattern py-24 lg:py-28" style="background:var(--bg-el)">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-14">
+                <div class="section-badge rv" style="margin-bottom:.8rem"><i class="fa-solid fa-quote-left" style="font-size:.55rem"></i> Reviews</div>
+                <h2 class="section-title rv rv-d1">What Our Customers Say</h2>
+                <div class="divider-purple mx-auto mt-4 rv rv-d2"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="rev-card rv rv-d1">
+                    <div class="stars mb-4"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p style="color:var(--fg-dim);font-size:.92rem;line-height:1.7;margin-bottom:1.5rem">"I've struggled with dandruff for years. After two weeks with bolly Clarify, my flakes are completely gone. This is the real deal."</p>
+                    <div class="flex items-center gap-3">
+                        <img src="https://picsum.photos/seed/alex-t/48/48.jpg" alt="Alex T." style="width:40px;height:40px;border-radius:50%;object-fit:cover">
+                        <div><div class="font-semibold" style="font-size:.9rem">Alex T.</div><div style="font-size:.75rem;color:var(--muted)">Verified Buyer</div></div>
+                    </div>
+                </div>
+                <div class="rev-card rv rv-d2">
+                    <div class="stars mb-4"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i></div>
+                    <p style="color:var(--fg-dim);font-size:.92rem;line-height:1.7;margin-bottom:1.5rem">"Finally a clarifying shampoo that doesn't strip my hair. It feels clean but still soft and manageable. The purple bottle looks amazing too."</p>
+                    <div class="flex items-center gap-3">
+                        <img src="https://picsum.photos/seed/maya-l/48/48.jpg" alt="Maya L." style="width:40px;height:40px;border-radius:50%;object-fit:cover">
+                        <div><div class="font-semibold" style="font-size:.9rem">Maya L.</div><div style="font-size:.75rem;color:var(--muted)">Verified Buyer</div></div>
+                    </div>
+                </div>
+                <div class="rev-card rv rv-d3">
+                    <div class="stars mb-4"><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i></div>
+                    <p style="color:var(--fg-dim);font-size:.92rem;line-height:1.7;margin-bottom:1.5rem">"As a dermatologist, I recommend bolly Clarify to my patients. The zinc pyrithione concentration is clinically effective yet gentle."</p>
+                    <div class="flex items-center gap-3">
+                        <img src="https://picsum.photos/seed/dr-chen/48/48.jpg" alt="Dr. Chen" style="width:40px;height:40px;border-radius:50%;object-fit:cover">
+                        <div><div class="font-semibold" style="font-size:.9rem">Dr. Chen</div><div style="font-size:.75rem;color:var(--muted)">Dermatologist</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section id="cta" class="py-24 lg:py-28 relative overflow-hidden">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg, var(--accent-dk), var(--accent), var(--accent-lt));z-index:0"></div>
+        <div style="position:absolute;inset:0;opacity:.06;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:20px 20px;z-index:1"></div>
+        <div class="max-w-3xl mx-auto px-6 text-center relative z-10">
+            <h2 class="rv text-3xl lg:text-5xl font-bold mb-5" style="color:#fff;letter-spacing:-.02em;line-height:1.1">
+                Ready to Say<br>Goodbye to Flakes?
+            </h2>
+            <p class="rv rv-d1" style="color:rgba(255,255,255,0.85);font-size:1.05rem;line-height:1.7;margin-bottom:2.5rem;max-width:480px;margin-left:auto;margin-right:auto">
+                Join 30,000+ people who have already made the switch. Free shipping on your first order.
+            </p>
+            <div class="rv rv-d2" style="background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.2);border-radius:18px;padding:1.5rem 2rem;display:inline-flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem">
+                <div style="text-align:left">
+                    <div style="font-size:.75rem;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:.08em">bolly Clarify Shampoo</div>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <span style="font-size:1.8rem;font-weight:700;color:#fff">$24</span>
+                        <span style="font-size:.95rem;color:rgba(255,255,255,0.5);text-decoration:line-through">$36</span>
+                        <span style="font-size:.72rem;color:#fff;font-weight:600;background:rgba(255,255,255,0.2);padding:.15rem .5rem;border-radius:6px">SAVE 33%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center rv rv-d3">
+                <button class="btn-primary" id="addCart" style="background:#fff;color:var(--accent);font-size:1rem;padding:1.1rem 3rem">
+                    <i class="fa-solid fa-bag-shopping" style="font-size:.85rem"></i> Add to Cart
+                </button>
+                <button class="btn-outline" id="subBtn" style="border-color:rgba(255,255,255,0.4);color:#fff">
+                    <i class="fa-solid fa-rotate" style="font-size:.8rem"></i> Subscribe & Save 15%
+                </button>
+            </div>
+            <p class="rv rv-d4 mt-5" style="font-size:.78rem;color:rgba(255,255,255,0.6)">
+                <i class="fa-solid fa-truck" style="margin-right:.3rem"></i> Free shipping &nbsp;&bull;&nbsp;
+                <i class="fa-solid fa-arrow-rotate-left" style="margin-right:.3rem"></i> 30-day returns &nbsp;&bull;&nbsp;
+                <i class="fa-solid fa-lock" style="margin-right:.3rem"></i> Secure checkout
+            </p>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer style="border-top:1px solid var(--border);padding:3rem 0 2rem;background:var(--bg)">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div style="font-family:'Poppins',sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent);margin-bottom:.8rem">bolly</div>
+                    <p style="color:var(--muted);font-size:.85rem;line-height:1.65">Dermatologist-recommended anti-dandruff care. Clean formulas, real results.</p>
+                </div>
+                <div>
+                    <h5 style="font-family:'Poppins',sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-dim);margin-bottom:.8rem;font-weight:600">Shop</h5>
+                    <div class="flex flex-col gap-2"><a href="#" class="ft-link">Shampoo</a><a href="#" class="ft-link">Conditioner</a><a href="#" class="ft-link">Scalp Serum</a><a href="#" class="ft-link">Bundle</a></div>
+                </div>
+                <div>
+                    <h5 style="font-family:'Poppins',sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-dim);margin-bottom:.8rem;font-weight:600">Company</h5>
+                    <div class="flex flex-col gap-2"><a href="#" class="ft-link">About</a><a href="#" class="ft-link">Science</a><a href="#" class="ft-link">Sustainability</a><a href="#" class="ft-link">Careers</a></div>
+                </div>
+                <div>
+                    <h5 style="font-family:'Poppins',sans-serif;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-dim);margin-bottom:.8rem;font-weight:600">Connect</h5>
+                    <div class="flex gap-4 mb-3">
+                        <a href="#" class="ft-link" style="font-size:1.1rem" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="ft-link" style="font-size:1.1rem" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                        <a href="#" class="ft-link" style="font-size:1.1rem" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="#" class="ft-link" style="font-size:1.1rem" aria-label="YouTube"><i class="fa-brands fa-youtube"></i></a>
+                    </div>
+                    <p style="font-size:.8rem;color:var(--muted)">hello@bolly.com</p>
+                </div>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:1.5rem;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:1rem">
+                <p style="font-size:.78rem;color:var(--muted)">&copy; 2026 bolly. All rights reserved.</p>
+                <div class="flex gap-4"><a href="#" class="ft-link" style="font-size:.78rem">Privacy</a><a href="#" class="ft-link" style="font-size:.78rem">Terms</a><a href="#" class="ft-link" style="font-size:.78rem">Cookies</a></div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== PAGE INTERACTIONS ==================== -->
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const mobMenu = document.getElementById('mobMenu');
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            mobMenu.classList.toggle('open');
+            document.body.style.overflow = mobMenu.classList.contains('open') ? 'hidden' : '';
+        });
+        function closeMob() {
+            hamburger.classList.remove('active');
+            mobMenu.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => { navbar.classList.toggle('scrolled', window.scrollY > 50); });
+
+        const rvEls = document.querySelectorAll('.rv');
+        const rvObs = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vis'); rvObs.unobserve(e.target); } });
+        }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+        rvEls.forEach(el => rvObs.observe(el));
+
+        const statEls = document.querySelectorAll('.stat-num[data-target]');
+        const statObs = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    const el = e.target;
+                    const target = parseFloat(el.dataset.target);
+                    const suffix = el.dataset.suffix || '';
+                    const isDecimal = el.dataset.decimal === 'true';
+                    const duration = 1600;
+                    const start = performance.now();
+                    function tick(now) {
+                        const p = Math.min((now - start) / duration, 1);
+                        const ease = 1 - Math.pow(1 - p, 3);
+                        el.textContent = (isDecimal ? (ease * target).toFixed(1) : Math.round(ease * target)) + suffix;
+                        if (p < 1) requestAnimationFrame(tick);
+                    }
+                    requestAnimationFrame(tick);
+                    statObs.unobserve(el);
+                }
+            });
+        }, { threshold: 0.5 });
+        statEls.forEach(el => statObs.observe(el));
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2800);
+        }
+        document.getElementById('addCart').addEventListener('click', () => showToast('Added to cart — bolly Clarify Shampoo'));
+        document.getElementById('subBtn').addEventListener('click', () => showToast('Subscribed! 15% discount applied'));
+
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', (e) => {
+                const tgt = document.querySelector(a.getAttribute('href'));
+                if (tgt) { e.preventDefault(); tgt.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            });
+        });
+    </script>
+
+    <!-- ==================== THREE.JS 3D BOTTLE ==================== -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const container = document.getElementById('bottle-box');
+        await document.fonts.ready;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        container.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(30, container.clientWidth / container.clientHeight, 0.1, 100);
+        camera.position.set(0, 2.2, 6);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.enableZoom = false;
+        controls.enablePan = false;
+        controls.minPolarAngle = Math.PI * 0.2;
+        controls.maxPolarAngle = Math.PI * 0.75;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 1.5;
+        controls.target.set(0, 1.6, 0);
+
+        let autoRotateTimeout;
+        controls.addEventListener('start', () => { controls.autoRotate = false; clearTimeout(autoRotateTimeout); });
+        controls.addEventListener('end', () => { autoRotateTimeout = setTimeout(() => { controls.autoRotate = true; }, 3000); });
+
+        // Lighting
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        keyLight.position.set(3, 6, 4);
+        scene.add(keyLight);
+        const fillLight = new THREE.DirectionalLight(0xd0d0ff, 0.4);
+        fillLight.position.set(-4, 3, 2);
+        scene.add(fillLight);
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        rimLight.position.set(0, 3, -5);
+        scene.add(rimLight);
+        const purpleGlow = new THREE.PointLight(0x7C3AED, 0.4, 8);
+        purpleGlow.position.set(0, 0, 3);
+        scene.add(purpleGlow);
+
+        const bottleGroup = new THREE.Group();
+
+        // Bottle body profile
+        const profile = [
+            new THREE.Vector2(0.001, 0),
+            new THREE.Vector2(0.55, 0),
+            new THREE.Vector2(0.58, 0.02),
+            new THREE.Vector2(0.62, 0.08),
+            new THREE.Vector2(0.64, 0.22),
+            new THREE.Vector2(0.66, 0.50),
+            new THREE.Vector2(0.67, 0.90),
+            new THREE.Vector2(0.67, 1.90),
+            new THREE.Vector2(0.66, 2.05),
+            new THREE.Vector2(0.62, 2.20),
+            new THREE.Vector2(0.52, 2.38),
+            new THREE.Vector2(0.36, 2.52),
+            new THREE.Vector2(0.22, 2.64),
+            new THREE.Vector2(0.17, 2.72),
+            new THREE.Vector2(0.17, 3.00),
+            new THREE.Vector2(0.20, 3.05),
+            new THREE.Vector2(0.20, 3.08),
+        ];
+
+        const bottleGeo = new THREE.LatheGeometry(profile, 64);
+        const bottleMat = new THREE.MeshPhysicalMaterial({
+            color: 0x7C3AED,
+            metalness: 0.0,
+            roughness: 0.15,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.05,
+            transmission: 0.15,
+            thickness: 0.5,
+            ior: 1.45,
+            envMapIntensity: 0.9,
+            side: THREE.DoubleSide,
+        });
+        bottleGroup.add(new THREE.Mesh(bottleGeo, bottleMat));
+
+        // Label
+        const lc = document.createElement('canvas');
+        lc.width = 1024; lc.height = 512;
+        const lx = lc.getContext('2d');
+
+        // Label background
+        lx.fillStyle = 'rgba(255,255,255,0.95)';
+        lx.beginPath();
+        lx.roundRect(40, 20, 944, 472, 16);
+        lx.fill();
+
+        // Decorative line top
+        lx.strokeStyle = 'rgba(124,58,237,0.3)';
+        lx.lineWidth = 1.5;
+        lx.beginPath(); lx.moveTo(80, 60); lx.lineTo(944, 60); lx.stroke();
+
+        // Brand
+        lx.textAlign = 'center'; lx.textBaseline = 'middle';
+        lx.fillStyle = '#7C3AED';
+        lx.font = '800 72px Poppins, Arial, sans-serif';
+        lx.fillText('bolly', 512, 170);
+
+        // Decorative line under brand
+        lx.strokeStyle = 'rgba(124,58,237,0.25)';
+        lx.lineWidth = 1;
+        lx.beginPath(); lx.moveTo(360, 215); lx.lineTo(664, 215); lx.stroke();
+
+        // Product name
+        lx.fillStyle = '#1A1A2E';
+        lx.font = '500 28px Poppins, Arial, sans-serif';
+        lx.fillText('CLARIFY', 512, 275);
+
+        // Sub text
+        lx.fillStyle = 'rgba(85,85,102,0.7)';
+        lx.font = '400 16px "DM Sans", Arial, sans-serif';
+        lx.fillText('Anti-Dandruff Shampoo', 512, 320);
+
+        // Bottom decorative line
+        lx.strokeStyle = 'rgba(124,58,237,0.3)';
+        lx.lineWidth = 1.5;
+        lx.beginPath(); lx.moveTo(80, 452); lx.lineTo(944, 452); lx.stroke();
+
+        // Volume
+        lx.fillStyle = 'rgba(85,85,102,0.5)';
+        lx.font = '400 13px "DM Sans", Arial, sans-serif';
+        lx.fillText('300ml  /  10.1 fl oz', 512, 415);
+
+        const labelTex = new THREE.CanvasTexture(lc);
+        labelTex.colorSpace = THREE.SRGBColorSpace;
+
+        const labelGeo = new THREE.CylinderGeometry(0.682, 0.682, 1.2, 64, 1, true);
+        const labelMat = new THREE.MeshPhysicalMaterial({
+            map: labelTex, transparent: true, metalness: 0.0, roughness: 0.3,
+            clearcoat: 0.3, clearcoatRoughness: 0.2, side: THREE.FrontSide,
+        });
+        const labelMesh = new THREE.Mesh(labelGeo, labelMat);
+        labelMesh.position.y = 1.15;
+        bottleGroup.add(labelMesh);
+
+        // Pump collar (white ring at neck top)
+        const pumpCollarMat = new THREE.MeshPhysicalMaterial({
+            color: 0xF5F5F5, metalness: 0.05, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.1,
+        });
+        const pumpCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.10, 32), pumpCollarMat);
+        pumpCollar.position.y = 3.13;
+        bottleGroup.add(pumpCollar);
+
+        // Pump tube (vertical)
+        const pumpTubeMat = new THREE.MeshPhysicalMaterial({
+            color: 0xEEEEEE, metalness: 0.05, roughness: 0.2, clearcoat: 0.9, clearcoatRoughness: 0.05,
+        });
+        const pumpTube = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.75, 16), pumpTubeMat);
+        pumpTube.position.y = 3.55;
+        bottleGroup.add(pumpTube);
+
+        // Pump head (horizontal nozzle)
+        const pumpHeadMat = new THREE.MeshPhysicalMaterial({
+            color: 0x7C3AED, metalness: 0.05, roughness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.05,
+        });
+        const pumpHead = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.045, 0.38, 16), pumpHeadMat);
+        pumpHead.rotation.z = Math.PI / 2;
+        pumpHead.position.set(0.19, 3.92, 0);
+        bottleGroup.add(pumpHead);
+
+        // Nozzle tip
+        const nozzleTip = new THREE.Mesh(new THREE.SphereGeometry(0.04, 16, 8), pumpHeadMat);
+        nozzleTip.position.set(0.38, 3.92, 0);
+        bottleGroup.add(nozzleTip);
+
+        // Pump head base (small cup)
+        const pumpBase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.04, 0.06, 16), pumpTubeMat);
+        pumpBase.position.y = 3.90;
+        bottleGroup.add(pumpBase);
+
+        bottleGroup.position.y = -1.7;
+        scene.add(bottleGroup);
+
+        // Ground shadow
+        const sc = document.createElement('canvas');
+        sc.width = 256; sc.height = 256;
+        const sx = sc.getContext('2d');
+        const sg = sx.createRadialGradient(128, 128, 0, 128, 128, 128);
+        sg.addColorStop(0, 'rgba(124,58,237,0.12)');
+        sg.addColorStop(0.4, 'rgba(124,58,237,0.04)');
+        sg.addColorStop(1, 'rgba(124,58,237,0)');
+        sx.fillStyle = sg; sx.fillRect(0, 0, 256, 256);
+        const shadowPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(3.5, 3.5),
+            new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, depthWrite: false })
+        );
+        shadowPlane.rotation.x = -Math.PI / 2;
+        shadowPlane.position.y = -1.7;
+        scene.add(shadowPlane);
+
+        // Floating particles
+        const pCount = 50;
+        const pGeo = new THREE.BufferGeometry();
+        const pPos = new Float32Array(pCount * 3);
+        const pSpd = new Float32Array(pCount);
+        for (let i = 0; i < pCount; i++) {
+            pPos[i*3] = (Math.random() - 0.5) * 5;
+            pPos[i*3+1] = Math.random() * 5 - 1.5;
+            pPos[i*3+2] = (Math.random() - 0.5) * 4;
+            pSpd[i] = 0.002 + Math.random() * 0.003;
+        }
+        pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+
+        const pc = document.createElement('canvas');
+        pc.width = 64; pc.height = 64;
+        const px = pc.getContext('2d');
+        const pg = px.createRadialGradient(32, 32, 0, 32, 32, 32);
+        pg.addColorStop(0, 'rgba(124,58,237,0.6)');
+        pg.addColorStop(0.3, 'rgba(167,139,250,0.2)');
+        pg.addColorStop(1, 'rgba(124,58,237,0)');
+        px.fillStyle = pg; px.fillRect(0, 0, 64, 64);
+        scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({
+            map: new THREE.CanvasTexture(pc), size: 0.07, transparent: true, opacity: 0.5,
+            depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true,
+        })));
+
+        // Animate
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+            controls.update();
+
+            const pa = pGeo.attributes.position.array;
+            for (let i = 0; i < pCount; i++) {
+                pa[i*3+1] += pSpd[i];
+                pa[i*3] += Math.sin(t * 0.5 + i) * 0.0004;
+                if (pa[i*3+1] > 3.5) {
+                    pa[i*3+1] = -1.5;
+                    pa[i*3] = (Math.random() - 0.5) * 5;
+                    pa[i*3+2] = (Math.random() - 0.5) * 4;
+                }
+            }
+            pGeo.attributes.position.needsUpdate = true;
+
+            const b = 1 + Math.sin(t * 0.8) * 0.004;
+            bottleGroup.scale.set(b, b, b);
+            purpleGlow.intensity = 0.35 + Math.sin(t * 1.2) * 0.12;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        function onResize() {
+            const w = container.clientWidth, h = container.clientHeight;
+            if (!w || !h) return;
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        }
+        window.addEventListener('resize', onResize);
+        if (typeof ResizeObserver !== 'undefined') new ResizeObserver(onResize).observe(container);
+    </script>
+</body>
+</html>
